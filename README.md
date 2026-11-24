@@ -59,22 +59,6 @@ Tekan Jeda kalau mau berhenti sebentar, tekan Play untuk lanjut
 Cara Jalan di Local / VS Code
 Proyek ini adalah aplikasi web statis (HTML, CSS, JS). Tidak perlu install rumit.
 
-Cara 1 — Buka langsung
-git clone https://github.com/username-kamu/pidatopro.git
-cd pidatopro
-Buka file index.html di browser.
-
-Cara 2 — VS Code + Live Server (disarankan)
-Buka folder proyek di VS Code
-Install extension Live Server (oleh Ritwick Dey)
-Klik kanan index.html -> Open with Live Server
-Atau klik tombol Go Live di pojok kanan bawah VS Code
-Aplikasi terbuka di http://127.0.0.1:5500
-Catatan path gambar: pakai slash ke depan /, contoh: images/foto.jpg, bukan \.
-
-Cara 3 — Python HTTP Server
-python -m http.server 8000
-# Buka http://localhost:8000
 Struktur Folder
 pidatopro/
 ├── index.html              # Halaman utama
@@ -89,7 +73,6 @@ pidatopro/
 │   └── images/             # Gambar / ikon (jika ada)
 ├── README.md               # File ini
 └── LICENSE                 # Lisensi MIT
-Struktur di atas adalah struktur yang disarankan. Sesuaikan dengan file yang ada di repo kamu.
 
 Cara Edit Template
 Template pidato disimpan sebagai data (array / object) di file JS.
