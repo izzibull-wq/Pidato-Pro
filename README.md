@@ -119,21 +119,6 @@ scrollTop integer membulatkan gerakan < 1px jadi 0 -> kecepatan pelan (0.25 - 0.
 translateY + posisi float membuat gerakan di bawah 1px tetap terlihat
 deltaTime membuat kecepatan konsisten di HP / laptop mana pun
 Satu state isPlaying saja supaya ikon Play / Jeda selalu sinkron
-Deploy Gratis
-Cloudflare Pages (disarankan)
-Push repo ini ke GitHub
-Buka Cloudflare Pages
-Create Application -> Pages -> Connect to Git
-Pilih repo pidatopro
-Build command: kosongkan / None
-Output directory: / (root)
-Deploy — dapat link https://pidatopro.pages.dev
-Keunggulan: bandwidth unlimited, gratis, cocok untuk HTML statis.
-
-Alternatif
-GitHub Pages: Settings -> Pages -> Deploy from branch -> main -> / (root)
-Netlify Drop: drag folder proyek ke Netlify Drop
-Vercel: import repo GitHub, framework preset: Other
 Checklist Kualitas
  Header fixed, kartu hilang rapi di belakang header
  Countdown 3-2-1 -> teks langsung jalan otomatis
