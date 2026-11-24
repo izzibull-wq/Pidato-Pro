@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PidatoPro — VS Code Fixed</title>
+<style>
+:root{ --base:#8a5a2b; --bg:#fdf6ee; --card:#ffffff; --text:#2b2118; --muted:#8a7a68; --radius:20px; }
+*{box-sizing:border-box; margin:0; padding:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
+body{background:var(--bg); color:var(--text); padding-bottom:90px;}
+header{position:fixed; top:0; left:0; right:0; z-index:50; background:#fff; box-shadow:0 4px 20px rgba(0,0,0,.08); padding:14px 16px; display:flex; align-items:center; justify-content:space-between;}
+.logo{font-size:24px; font-weight:900;} .logo span{color:var(--base);}
+.btn{border:0; cursor:pointer; border-radius:999px; padding:12px 18px; font-weight:700; font-size:14px;}
+.btn-primary{background:var(--base); color:#fff;}
+.btn-ghost{background:#fff; border:1px solid #e8ddd0; color:var(--text);}
+.btn-small{padding:8px 14px; font-size:13px;}
+main{max-width:760px; margin:0 auto; padding:84px 16px 20px;}
+.card{background:var(--card); border:1px solid #f0e6d8; border-radius:var(--radius); padding:18px; margin-bottom:16px; box-shadow:0 6px 20px rgba(0,0,0,.04);}
+.card h2{font-size:18px; margin-bottom:8px;} .card p{color:var(--muted); line-height:1.6; font-size:14px;}
+.step{display:flex; gap:12px; margin-top:12px;} .num{width:32px; height:32px; min-width:32px; border-radius:50%; background:var(--base); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800;}
+.colors{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;}
+.color{width:44px; height:44px; border-radius:50%; border:3px solid transparent; cursor:pointer;}
+.color.active{border-color:#fff; outline:2px solid var(--base);}
+input,select,textarea{width:100%; padding:13px 14px; border:1px solid #e8ddd0; border-radius:14px; font-size:15px; background:#fff; color:var(--text); outline:none;}
+input:focus,select:focus,textarea:focus{border-color:var(--base);}
+label{font-weight:700; font-size:14px; display:block; margin:14px 0 6px;}
+textarea{min-height:220px; resize:vertical; line-height:1.7;}
+.template{border:1px solid #f0e6d8; border-radius:16px; padding:14px; margin-top:10px; display:flex; justify-content:space-between; gap:10px; align-items:center;}
+.template b{font-size:15px;} .template small{color:var(--muted); display:block; margin-top:3px;}
+.hidden{display:none !important;}
+.history-item{border:1px solid #f0e6d8; border-radius:14px; padding:12px; margin-top:10px;}
+.history-item p{white-space:pre-wrap; font-size:14px; line-height:1.6; max-height:90px; overflow:hidden;}
+.row{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;}
+.note{background:#fff7e8; border:1px solid #ffe8b8; padding:12px; border-radius:12px; font-size:13px; color:#7a5a1a; line-height:1.5; margin-top:12px;}
+/* Teleprompter */
+.overlay{position:fixed; inset:0; z-index:100; background:#0f0f0f; color:#fff; display:flex; flex-direction:column;}
+.overlay-top{padding:14px 16px; display:flex; justify-content:space-between; align-items:center; background:#1a1a1a;}
+.tp-stage{flex:1; overflow:hidden; position:relative;}
+.tp-text{position:absolute; left:0; right:0; top:100%; padding:20px 22px; font-size:32px; line-height:1.6; text-align:center; white-space:pre-wrap; will-change:transform;}
+.tp-controls{background:#1a1a1a; padding:14px 16px; display:flex; flex-direction:column; gap:10px;}
+.tp-controls input[type=range]{accent-color:var(--base);}
+.countdown{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:110px; font-weight:900; background:rgba(0,0,0,.75); z-index:5;}
+.topbtn{position:fixed; right:16px; bottom:16px; z-index:40; width:46px; height:46px; border-radius:50%; background:#fff; border:1px solid var(--base); color:var(--base); font-size:22px; cursor:pointer; display:none; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(0,0,0,.12);}
+.topbtn.show{display:flex;}
+@media(max-width:520px){ .tp-text{font-size:24px;} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Pidato<span>Pro</span></div>
+  <button class="btn btn-primary" onclick="showForm()">+ Tambah Pidato</button>
+</header>
+
+<main id="homePage">
+  <div class="card">
+    <h2>Cara Pakai</h2>
+    <div class="step"><div class="num">1</div><p><b>Pilih atau Tempel.</b> Pilih template di bawah, atau tekan Tambah Pidato untuk tempel teks sendiri.</p></div>
+    <div class="step"><div class="num">2</div><p><b>Tekan Mulai.</b> Tunggu hitungan 3 - 2 - 1.</p></div>
+    <div class="step"><div class="num">3</div><p><b>Baca Saja.</b> Teks akan berjalan sendiri. Kamu tinggal membaca. Kecepatan bisa diatur.</p></div>
+  </div>
+
+  <div class="card">
+    <h2>🎨 Warna Tampilan</h2>
+    <p>Warna aktif: <b id="colorName">Coklat / Krem</b></p>
+    <div class="colors" id="colors"></div>
+    <p style="margin-top:10px;">Ketuk bulatan warna untuk mengubah tombol dan aksen di seluruh aplikasi.</p>
+  </div>
+
+  <div class="card">
+    <h2>🔍 Cari Pidato</h2>
+    <input id="searchInput" placeholder="Cari pidato..." oninput="renderTemplates()">
+  </div>
+
+  <div class="card">
+    <h2>📄 Template Pidato — Semua Template</h2>
+    <label for="filterAcara">Filter Acara</label>
+    <select id="filterAcara" onchange="renderTemplates()">
+      <option value="Semua">Semua Acara</option>
+      <option value="Pernikahan">Pernikahan</option>
+      <option value="Wisuda">Wisuda</option>
+      <option value="Kemerdekaan">Kemerdekaan</option>
+      <option value="Motivasi">Motivasi</option>
+    </select>
+    <div id="templateList"></div>
+  </div>
+
+  <div class="card">
+    <h2>⭐ Tersimpan / Riwayat Tersimpan</h2>
+    <p>Pidato yang kamu simpan dari form Tambah Pidato muncul di sini.</p>
+    <div id="savedList"></div>
+  </div>
+</main>
+
+<!-- HALAMAN FORM TAMBAH -->
+<main id="formPage" class="hidden">
+  <div class="card">
+    <h2>Tambah Pidato Baru</h2>
+    <p>Isi form di bawah. Teks ini tidak akan jadi template di halaman depan.</p>
+
+    <label for="fJudul">Judul</label>
+    <input id="fJudul" placeholder="Contoh: Pidato Pernikahan">
+
+    <label for="fAcara">Acara</label>
+    <input id="fAcara" placeholder="Contoh: Pernikahan, Wisuda, Motivasi...">
+
+    <label for="fTeks">Teks Pidato</label>
+    <textarea id="fTeks" placeholder="Tempel atau ketik teks pidato di sini..."></textarea>
+
+    <div class="row">
+      <button class="btn btn-primary" onclick="saveToHistory()">Simpan ke Riwayat</button>
+      <button class="btn btn-ghost" onclick="previewFromForm()">Pratinjau & Mulai</button>
+      <button class="btn btn-ghost" onclick="showHome()">Batal</button>
+    </div>
+
+    <div class="note">Tips VS Code: buka file ini pakai <b>Live Server</b> (klik kanan → Open with Live Server / tombol Go Live), jangan dibuka langsung dengan double-click file. Kalau dibuka lewat file://, localStorage bisa diblokir browser.</div>
+
+    <h2 style="margin-top:22px;">Riwayat (di dalam form saja)</h2>
+    <p>Riwayat ini hanya di form. Tekan Simpan untuk pindah ke Tersimpan di halaman depan.</p>
+    <div id="historyList"></div>
+  </div>
+</main>
+
+<!-- TELEPROMPTER -->
+<div id="tp" class="overlay hidden">
+  <div class="overlay-top">
+    <b id="tpTitle">Pidato</b>
+    <button class="btn btn-ghost btn-small" onclick="closeTP()">✕ Tutup</button>
+  </div>
+  <div class="tp-stage" id="stage">
+    <div class="tp-text" id="tpText"></div>
+    <div id="countdown" class="countdown hidden">3</div>
+  </div>
+  <div class="tp-controls">
+    <div class="row" style="margin:0; justify-content:space-between; align-items:center;">
+      <button class="btn btn-primary" id="playBtn" onclick="togglePlay()">▶ Mulai</button>
+      <button class="btn btn-ghost btn-small" onclick="restartTP()">↺ Ulangi</button>
+      <span id="speedLabel" style="color:#fff; font-weight:700;">Kecepatan: 1.00x</span>
+    </div>
+    <input type="range" id="speedRange" min="0.25" max="2" step="0.05" value="1" oninput="changeSpeed(this.value)">
+    <div style="display:flex; justify-content:space-between; color:#aaa; font-size:12px;"><span>0.25 Pelan</span><span>1.00 Normal</span><span>2.00 Cepat</span></div>
+  </div>
+</div>
+
+<button class="topbtn" id="topBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+// ============ DATA TEMPLATE (contoh, bisa ditambah) ============
+const templates = [
+  {judul:"Pidato Pernikahan", acara:"Pernikahan", bahasa:"Indonesia", teks:"Assalamualaikum warahmatullahi wabarakatuh.\n\nYang saya hormati kedua mempelai, keluarga besar, dan hadirin yang berbahagia.\n\nHari ini kita berkumpul untuk merayakan cinta yang disatukan dalam ikatan suci pernikahan. Semoga menjadi keluarga yang sakinah, mawaddah, warahmah.\n\nTerima kasih."},
+  {judul:"Wedding Speech", acara:"Pernikahan", bahasa:"English", teks:"Good evening, everyone.\n\nIt is an honor to stand here today to celebrate love.\n\nMay your marriage be filled with happiness, patience, and endless support for each other.\n\nThank you."},
+  {judul:"Pidato Wisuda", acara:"Wisuda", bahasa:"Indonesia", teks:"Selamat pagi dan selamat atas kelulusan kita semua.\n\nPerjalanan ini tidak mudah. Ada begadang, tugas, dan rasa menyerah. Tapi hari ini kita membuktikan bahwa kita bisa.\n\nTerima kasih untuk guru, orang tua, dan teman-teman yang selalu mendukung.\n\nSelamat melangkah ke babak baru!"},
+  {judul:"Pidato Kemerdekaan", acara:"Kemerdekaan", bahasa:"Indonesia", teks:"Merdeka!\n\nHari ini kita memperingati kemerdekaan Indonesia. Kemerdekaan ini diraih dengan perjuangan dan pengorbanan.\n\nTugas kita sekarang adalah mengisi kemerdekaan dengan karya, kejujuran, dan kepedulian.\n\nDirgahayu Indonesia!"},
+  {judul:"Independence Day Speech", acara:"Kemerdekaan", bahasa:"English", teks:"Happy Independence Day!\n\nToday we celebrate freedom. Freedom was not given, it was fought for.\n\nOur duty now is to fill this freedom with good work and kindness.\n\nThank you."},
+];
+
+// ============ WARNA ============
+const themeList = [
+  {name:"Ungu", c:"#7c3aed"}, {name:"Biru", c:"#2563eb"}, {name:"Hijau", c:"#15803d"},
+  {name:"Orange", c:"#ea580c"}, {name:"Pink", c:"#db2777"}, {name:"Hitam", c:"#111111"},
+  {name:"Coklat / Krem", c:"#8a5a2b"}
+];
+let currentTheme = localStorage.getItem("pidato_theme") || "#8a5a2b";
+function renderColors(){
+  const wrap = document.getElementById("colors");
+  wrap.innerHTML = "";
+  themeList.forEach(t=>{
+    const d = document.createElement("div");
+    d.className = "color" + (t.c===currentTheme?" active":"");
+    d.style.background = t.c;
+    d.title = t.name;
+    d.onclick = ()=>{ currentTheme=t.c; localStorage.setItem("pidato_theme", t.c); applyTheme(); renderColors(); };
+    wrap.appendChild(d);
+  });
+}
+function applyTheme(){
+  document.documentElement.style.setProperty("--base", currentTheme);
+  const found = themeList.find(t=>t.c===currentTheme);
+  if(found) document.getElementById("colorName").textContent = found.name;
+}
+applyTheme(); renderColors();
+
+// ============ TEMPLATE LIST ============
+function renderTemplates(){
+  const q = (document.getElementById("searchInput").value||"").toLowerCase();
+  const f = document.getElementById("filterAcara").value;
+  const list = document.getElementById("templateList");
+  list.innerHTML = "";
+  templates.filter(t=>{
+    const okQ = (t.judul+" "+t.acara+" "+t.bahasa).toLowerCase().includes(q);
+    const okF = f==="Semua" || t.acara===f;
+    return okQ && okF;
+  }).forEach(t=>{
+    const div = document.createElement("div");
+    div.className="template";
+    div.innerHTML = `<div><b>${t.judul}</b><small>${t.acara} • ${t.bahasa}</small></div>`;
+    const b = document.createElement("button");
+    b.className="btn btn-primary btn-small"; b.textContent="▶ Mulai";
+    b.onclick=()=>openTP(t.judul, t.teks);
+    div.appendChild(b);
+    list.appendChild(div);
+  });
+  if(!list.innerHTML) list.innerHTML = "<p style='margin-top:10px; color:#888;'>Tidak ada template yang cocok.</p>";
+}
+renderTemplates();
+
+// ============ HALAMAN ============
+function showForm(){ document.getElementById("homePage").classList.add("hidden"); document.getElementById("formPage").classList.remove("hidden"); renderHistory(); window.scrollTo(0,0); }
+function showHome(){ document.getElementById("formPage").classList.add("hidden"); document.getElementById("homePage").classList.remove("hidden"); renderSaved(); window.scrollTo(0,0); }
+
+// ============ RIWAYAT + TERSIMPAN (localStorage, bukan backend) ============
+function getHistory(){ try{ return JSON.parse(localStorage.getItem("pidato_history")||"[]"); }catch(e){ return []; } }
+function getSaved(){ try{ return JSON.parse(localStorage.getItem("pidato_saved")||"[]"); }catch(e){ return []; } }
+function saveToHistory(){
+  const judul = document.getElementById("fJudul").value.trim() || "Tanpa Judul";
+  const acara = document.getElementById("fAcara").value.trim() || "-";
+  const teks = document.getElementById("fTeks").value.trim();
+  if(!teks){ alert("Isi dulu Teks Pidato."); return; }
+  const h = getHistory();
+  h.unshift({judul, acara, teks, time: Date.now()});
+  localStorage.setItem("pidato_history", JSON.stringify(h));
+  renderHistory();
+  alert("Disimpan ke Riwayat di dalam form.");
+}
+function renderHistory(){
+  const list = document.getElementById("historyList"); if(!list) return;
+  const h = getHistory(); list.innerHTML="";
+  if(!h.length){ list.innerHTML="<p style='color:#888; margin-top:10px;'>Belum ada riwayat.</p>"; return; }
+  h.forEach((item, idx)=>{
+    const d=document.createElement("div"); d.className="history-item";
+    d.innerHTML=`<b>${item.judul}</b> <small>• ${item.acara}</small><p>${item.teks}</p>`;
+    const row=document.createElement("div"); row.className="row";
+    const b1=document.createElement("button"); b1.className="btn btn-primary btn-small"; b1.textContent="▶ Mulai"; b1.onclick=()=>openTP(item.judul, item.teks);
+    const b2=document.createElement("button"); b2.className="btn btn-ghost btn-small"; b2.textContent="Simpan ke Tersimpan"; b2.onclick=()=>{ const s=getSaved(); s.unshift(item); localStorage.setItem("pidato_saved", JSON.stringify(s)); alert("Disimpan ke Tersimpan di halaman depan."); renderSaved(); };
+    const b3=document.createElement("button"); b3.className="btn btn-ghost btn-small"; b3.textContent="Hapus"; b3.onclick=()=>{ const hh=getHistory(); hh.splice(idx,1); localStorage.setItem("pidato_history", JSON.stringify(hh)); renderHistory(); };
+    row.append(b1,b2,b3); d.appendChild(row); list.appendChild(d);
+  });
+}
+function renderSaved(){
+  const list=document.getElementById("savedList"); if(!list) return;
+  const s=getSaved(); list.innerHTML="";
+  if(!s.length){ list.innerHTML="<p style='color:#888; margin-top:10px;'>Belum ada yang tersimpan.</p>"; return; }
+  s.forEach((item, idx)=>{
+    const d=document.createElement("div"); d.className="template";
+    d.innerHTML=`<div><b>${item.judul}</b><small>${item.acara}</small></div>`;
+    const wrap=document.createElement("div"); wrap.style.display="flex"; wrap.style.gap="8px";
+    const b1=document.createElement("button"); b1.className="btn btn-primary btn-small"; b1.textContent="▶ Mulai"; b1.onclick=()=>openTP(item.judul, item.teks);
+    const b2=document.createElement("button"); b2.className="btn btn-ghost btn-small"; b2.textContent="Hapus"; b2.onclick=()=>{ const ss=getSaved(); ss.splice(idx,1); localStorage.setItem("pidato_saved", JSON.stringify(ss)); renderSaved(); };
+    wrap.append(b1,b2); d.appendChild(wrap); list.appendChild(d);
+  });
+}
+renderSaved();
+
+// ============ TELEPROMPTER — ANTI STUCK ============
+let isPlaying=false, pos=0, lastTime=0, rafId=null, speed=1, currentText="";
+const tpEl=document.getElementById("tpText");
+function openTP(title, text){
+  currentText=text;
+  document.getElementById("tpTitle").textContent=title;
+  tpEl.textContent=text;
+  document.getElementById("tp").classList.remove("hidden");
+  document.body.style.overflow="hidden";
+  pos=0; tpEl.style.transform="translateY(0px)";
+  isPlaying=false; updatePlayBtn();
+  startCountdown();
+}
+function closeTP(){ stopLoop(); document.getElementById("tp").classList.add("hidden"); document.body.style.overflow=""; }
+function startCountdown(){
+  const cd=document.getElementById("countdown");
+  cd.classList.remove("hidden");
+  let n=3; cd.textContent=n;
+  const timer=setInterval(()=>{
+    n--;
+    if(n>0){ cd.textContent=n; }
+    else if(n===0){ cd.textContent="MULAI"; }
+    else{
+      clearInterval(timer);
+      cd.classList.add("hidden");
+      // AUTO START — langsung jalan setelah hitungan
+      isPlaying=true; updatePlayBtn(); lastTime=performance.now(); startLoop();
+    }
+  }, 800);
+}
+function updatePlayBtn(){
+  document.getElementById("playBtn").textContent = isPlaying ? "⏸ Jeda" : "▶ Mulai";
+}
+function togglePlay(){
+  isPlaying=!isPlaying; updatePlayBtn();
+  if(isPlaying){ lastTime=performance.now(); startLoop(); }
+  else{ stopLoop(); }
+}
+function changeSpeed(v){
+  speed=parseFloat(v);
+  document.getElementById("speedLabel").textContent="Kecepatan: "+speed.toFixed(2)+"x";
+}
+function startLoop(){
+  if(rafId) return;
+  const step=(now)=>{
+    if(!isPlaying){ rafId=null; return; }
+    const dt=(now-lastTime)/1000; lastTime=now;
+    // float + deltaTime, tidak di-floor, jadi 0.25 pun jalan
+    pos += speed * 40 * dt;
+    tpEl.style.transform=`translateY(${-pos}px)`;
+    // kalau sudah habis, berhenti
+    const stageH=document.getElementById("stage").clientHeight;
+    if(pos > tpEl.offsetHeight + stageH){ isPlaying=false; updatePlayBtn(); rafId=null; return; }
+    rafId=requestAnimationFrame(step);
+  };
+  rafId=requestAnimationFrame(step);
+}
+function stopLoop(){ if(rafId){ cancelAnimationFrame(rafId); rafId=null; } }
+function restartTP(){ stopLoop(); pos=0; tpEl.style.transform="translateY(0px)"; startCountdown(); }
+function previewFromForm(){
+  const judul=document.getElementById("fJudul").value.trim()||"Pratinjau";
+  const teks=document.getElementById("fTeks").value.trim();
+  if(!teks){ alert("Isi dulu Teks Pidato."); return; }
+  openTP(judul, teks);
+}
+window.addEventListener("scroll", ()=>{
+  document.getElementById("topBtn").classList.toggle("show", window.scrollY>400);
+});
+</script>
+</body>
+</html>
